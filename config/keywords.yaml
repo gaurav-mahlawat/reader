@@ -1,0 +1,47 @@
+# Your skills — bot searches PROJECTS (not job pages) matching these.
+# Edit this list or set skills on the dashboard (one per line or comma-separated).
+my_skills:
+  - React
+  - JavaScript
+  - WordPress
+  - PHP
+  - Web Development
+  - Full Stack
+  - Social Media Marketing
+  - Instagram Marketing
+  - Facebook Marketing
+  - SEO
+  - Search Engine Optimization
+  - Link Building
+  - Content Writing
+
+# Legacy category keywords (used to classify matched skill)
+web_dev:
+  - web development
+  - website
+  - wordpress
+  - react
+  - javascript
+  - php
+  - full stack
+  - frontend
+  - backend
+
+social_media:
+  - social media
+  - instagram
+  - facebook
+  - linkedin
+  - tiktok
+  - content calendar
+
+seo:
+  - seo
+  - search engine
+  - backlink
+  - keyword research
+  - link building
+
+# Project filters (also on dashboard):
+# max_project_age_days: last 2-3 days (default 3)
+# max_proposals: bid only if fewer than 50 proposals

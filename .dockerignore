@@ -1,0 +1,24 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.git/
+.gitignore
+.env
+.env.example
+data/
+*.log
+server_pid.txt
+server_err.txt
+server_log.txt
+.server_*.txt
+start freelancer autobidder.txt
+.DS_Store
+Dockerfile
+.dockerignore
+render.yaml
+README.md
+start.bat
+tests/
+scripts/

@@ -1,0 +1,15 @@
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+data/*
+!data/.gitkeep
+*.log
+server_pid.txt
+server_err.txt
+server_log.txt
+.server_*.txt
+start freelancer autobidder.txt
+.DS_Store

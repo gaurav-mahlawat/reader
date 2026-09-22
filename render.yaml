@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: reader
+    runtime: docker
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: DATA_DIR
+        value: data

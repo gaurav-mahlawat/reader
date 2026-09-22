@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reader</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --surface: #1a2332;
+      --border: #2d3a4f;
+      --text: #e7ecf3;
+      --muted: #8b9cb3;
+      --accent: #29b2a3;
+      --danger: #e85d5d;
+      --warn: #e8b339;
+      --success: #4caf82;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 24px;
+      line-height: 1.5;
+    }
+    h1 { margin: 0 0 8px; font-size: 1.75rem; }
+    .subtitle { color: var(--muted); margin-bottom: 24px; }
+    .grid {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 960px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin: 12px 0 4px;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+    textarea { min-height: 120px; resize: vertical; }
+    .row { display: flex; gap: 12px; }
+    .row > div { flex: 1; }
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .checkbox-row input { width: auto; }
+    .btn-row { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+    button {
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    .btn-start { background: var(--accent); color: #0a1210; }
+    .btn-stop { background: var(--danger); color: #fff; }
+    .btn-export { background: var(--border); color: var(--text); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .status-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 16px;
+      font-size: 0.9rem;
+    }
+    .pill {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 20px;
+    }
+    .pill.running { border-color: var(--accent); color: var(--accent); }
+    .pill.error { border-color: var(--danger); color: var(--danger); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    th { color: var(--muted); font-weight: 600; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .status-success { color: var(--success); }
+    .status-failed { color: var(--danger); }
+    .status-skipped { color: var(--warn); }
+    .status-running { color: var(--accent); }
+    a { color: var(--accent); }
+    .warning {
+      background: rgba(232, 179, 57, 0.1);
+      border: 1px solid var(--warn);
+      color: var(--warn);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Reader</h1>
+  <p class="subtitle">Bid on projects that match your skills — not generic job listings</p>
+
+  <div class="grid">
+    <div class="card">
+      <div class="warning">
+        Use at your own risk. May violate Freelancer ToS. Start with <strong>Dry run</strong> and headless off.
+      </div>
+      <form id="settingsForm">
+        <label>Freelancer email / username</label>
+        <input type="text" id="email" name="email" required autocomplete="username">
+
+        <label>Password</label>
+        <input type="password" id="password" name="password" required autocomplete="current-password">
+
+        <div class="row">
+          <div>
+            <label>Your name (shown in proposals)</label>
+            <input type="text" id="freelancer_name" name="freelancer_name" placeholder="e.g. Gaurav" value="Gaurav">
+          </div>
+          <div>
+            <label>Years of experience</label>
+            <input type="number" id="years_of_experience" value="3" min="0" max="50">
+          </div>
+        </div>
+
+        <label>Your skills (one per line)</label>
+        <textarea id="my_skills" name="my_skills">React
+JavaScript
+WordPress
+PHP
+SEO
+Social Media Marketing</textarea>
+
+        <label>Target segments (uncheck to skip a category this session)</label>
+        <div class="row" style="margin-bottom:12px;">
+          <div class="checkbox-row" style="margin-top:0;">
+            <input type="checkbox" id="cat_web_dev" name="cat_web_dev" checked>
+            <label for="cat_web_dev" style="margin:0">Web Development</label>
+          </div>
+          <div class="checkbox-row" style="margin-top:0;">
+            <input type="checkbox" id="cat_social_media" name="cat_social_media" checked>
+            <label for="cat_social_media" style="margin:0">Social Media Marketing</label>
+          </div>
+          <div class="checkbox-row" style="margin-top:0;">
+            <input type="checkbox" id="cat_seo" name="cat_seo" checked>
+            <label for="cat_seo" style="margin:0">SEO</label>
+          </div>
+        </div>
+
+        <label>Generic template (used when smart proposals are off)</label>
+        <textarea id="generic_template" name="generic_template">{greeting} my name is {freelancer_name}.
+
+{understanding_paragraph}
+
+{experience_paragraph}
+
+My approach for this project:
+{approach_paragraph}
+
+{specifics_paragraph}
+
+{question}
+
+I am available to start right away and would love to discuss this further.
+
+— {freelancer_name}
+Skills: {skill_tags}</textarea>
+
+        <label>SEO template</label>
+        <textarea id="seo_template" name="seo_template">{greeting} my name is {freelancer_name}.
+
+{understanding_paragraph}
+
+{experience_paragraph}
+
+My SEO process:
+{approach_paragraph}
+
+{specifics_paragraph}
+
+{question}
+
+I can start immediately and would love to discuss your goals in more detail.
+
+— {freelancer_name}
+Skills: {skill_tags}</textarea>
+
+        <label>Social Media template</label>
+        <textarea id="social_media_template" name="social_media_template">{greeting} my name is {freelancer_name}.
+
+{understanding_paragraph}
+
+{experience_paragraph}
+
+My social media strategy:
+{approach_paragraph}
+
+{specifics_paragraph}
+
+{question}
+
+I am ready to begin and excited to discuss your vision.
+
+— {freelancer_name}
+Skills: {skill_tags}</textarea>
+
+        <label>Web Development template</label>
+        <textarea id="web_dev_template" name="web_dev_template">{greeting} my name is {freelancer_name}.
+
+{understanding_paragraph}
+
+{experience_paragraph}
+
+My development process:
+{approach_paragraph}
+
+{specifics_paragraph}
+
+{question}
+
+I can start immediately and would love to discuss the technical details.
+
+— {freelancer_name}
+Skills: {skill_tags}</textarea>
+
+        <div class="row">
+          <div>
+            <label>Delivery days</label>
+            <input type="number" id="delivery_days" value="7" min="1" max="365">
+          </div>
+          <div>
+            <label>Min delay (sec)</label>
+            <input type="number" id="min_delay_seconds" value="300" min="60">
+          </div>
+          <div>
+            <label>Max delay (sec)</label>
+            <input type="number" id="max_delay_seconds" value="600" min="120">
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Max project age (days)</label>
+            <input type="number" id="max_project_age_days" value="3" min="1" max="14" title="Only projects posted in the last N days">
+          </div>
+          <div>
+            <label>Max proposals on project</label>
+            <input type="number" id="max_proposals" value="20" min="1" max="500" title="Skip if project already has this many bids">
+          </div>
+        </div>
+        <p style="font-size:0.8rem; color:var(--muted); margin:4px 0 8px;">
+          Bids only if posted within the age limit <strong>and</strong> proposals &lt; max (e.g. 19 bids OK, 20+ skipped). Lowest-proposal & newest projects bid first.
+        </p>
+
+        <div class="row">
+          <div>
+            <label>Max bids / hour</label>
+            <input type="number" id="max_bids_per_hour" value="8" min="1" max="50">
+          </div>
+          <div>
+            <label>Max bids / day</label>
+            <input type="number" id="max_bids_per_day" value="40" min="1" max="200">
+          </div>
+        </div>
+
+        <label>CAPTCHA / manual login wait (seconds)</label>
+        <input type="number" id="manual_login_wait_seconds" value="180" min="30" max="600">
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="headless" name="headless">
+          <label for="headless" style="margin:0">Headless browser (hide window)</label>
+        </div>
+        <p style="font-size:0.8rem; color:var(--muted); margin:8px 0 0;">
+          Keep headless <strong>off</strong> until login works. Complete CAPTCHA in the browser when it appears.
+        </p>
+        <div class="checkbox-row">
+          <input type="checkbox" id="use_smart_proposals" name="use_smart_proposals" checked>
+          <label for="use_smart_proposals" style="margin:0">Smart proposals (AI-powered, project-aware — reads each project description)</label>
+        </div>
+        <p style="font-size:0.8rem; color:var(--muted); margin:4px 0 8px;">
+          When enabled, proposals are generated dynamically per project using the description, tech stack, and requirements.
+          When disabled, the static templates below are used instead.
+        </p>
+        <div class="row">
+          <div>
+            <label>Proposal style</label>
+            <select id="proposal_style" name="proposal_style">
+              <option value="short">Short</option>
+              <option value="medium" selected>Medium</option>
+              <option value="long">Long</option>
+            </select>
+          </div>
+        </div>
+        <p style="font-size:0.7rem; color:var(--muted); margin:8px 0 8px;">
+          <strong>Available placeholders:</strong> {greeting} {freelancer_name} {project_title} {understanding_paragraph} {experience_paragraph} {approach_paragraph} {specifics_paragraph} {skill_tags} {technologies} {deliverables} {platforms} {question} {years_of_experience} {delivery_days} {proposal_count} {posted_label} {category}
+        </p>
+        <div class="checkbox-row">
+          <input type="checkbox" id="dry_run" name="dry_run">
+          <label for="dry_run" style="margin:0">Dry run (find projects only, no bids)</label>
+        </div>
+
+        <div class="btn-row">
+          <button type="submit" class="btn-start" id="btnStart">Start bot</button>
+          <button type="button" class="btn-stop" id="btnStop" disabled>Stop bot</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="status-bar" id="statusBar">
+        <span class="pill" id="statusRunning">Stopped</span>
+        <span class="pill">Today: <span id="bidsToday">0</span></span>
+        <span class="pill">Last hour: <span id="bidsHour">0</span></span>
+        <span class="pill">Last scan: <span id="lastScan">0</span> projects</span>
+        <span class="pill">Last bid: <span id="lastBidStatus">—</span></span>
+        <span class="pill">Template: <span id="lastBidTemplate">—</span></span>
+      </div>
+      <p id="lastAction" style="color: var(--muted); font-size: 0.9rem; margin: 0 0 8px;">—</p>
+      <p id="lastError" class="pill error" style="display:none;"></p>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h2 style="margin:0; font-size:1.1rem;">Bid sheet</h2>
+        <a href="/api/bids/export" class="btn-export" style="text-decoration:none; padding:8px 14px; border-radius:8px; background:var(--border); color:var(--text); font-size:0.85rem;">Export CSV</a>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Project</th>
+              <th>Category</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="bidsTable">
+            <tr><td colspan="5" style="color:var(--muted)">No bids yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:24px;">
+    <h2 style="margin:0 0 12px;font-size:1.1rem;">Session History</h2>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Session</th>
+            <th>Started</th>
+            <th>Ended</th>
+            <th>Status</th>
+            <th>Bids (ok/total)</th>
+            <th>Errors</th>
+          </tr>
+        </thead>
+        <tbody id="sessionsTable">
+          <tr><td colspan="6" style="color:var(--muted)">No sessions yet</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="errorsModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;">
+    <div class="card" style="max-width:700px;width:90%;max-height:80vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h2 style="margin:0;font-size:1.1rem;">Session Errors</h2>
+        <button id="closeErrorsModal" style="background:var(--border);color:var(--text);padding:6px 14px;">Close</button>
+      </div>
+      <div id="sessionErrors">
+        <p style="color:var(--muted)">Select a session to view errors.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("settingsForm");
+    const btnStart = document.getElementById("btnStart");
+    const btnStop = document.getElementById("btnStop");
+
+    async function refreshStatus() {
+      try {
+        const res = await fetch("/api/bot/status");
+        const s = await res.json();
+        const runningEl = document.getElementById("statusRunning");
+        runningEl.textContent = s.running ? (s.dry_run ? "Running (dry run)" : "Running") : "Stopped";
+        runningEl.className = "pill" + (s.running ? " running" : "");
+        document.getElementById("bidsToday").textContent = s.bids_today;
+        document.getElementById("bidsHour").textContent = s.bids_last_hour;
+        document.getElementById("lastScan").textContent = s.projects_found_last_scan;
+        document.getElementById("lastBidStatus").textContent = s.last_bid_status || "—";
+        document.getElementById("lastBidTemplate").textContent = s.last_bid_template || "—";
+        document.getElementById("lastAction").textContent = s.last_action || "—";
+        const errEl = document.getElementById("lastError");
+        if (s.last_error) {
+          errEl.textContent = s.last_error;
+          errEl.style.display = "inline-block";
+        } else {
+          errEl.style.display = "none";
+        }
+        btnStart.disabled = s.running;
+        btnStop.disabled = !s.running;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function refreshBids() {
+      try {
+        const res = await fetch("/api/bids");
+        const bids = await res.json();
+        const tbody = document.getElementById("bidsTable");
+        if (!bids.length) {
+          tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">No bids yet</td></tr>';
+          return;
+        }
+        tbody.innerHTML = bids.map(b => {
+          const time = b.bid_at ? new Date(b.bid_at).toLocaleString() : "—";
+          const amt = b.bid_amount != null ? `${b.bid_amount} ${b.currency || ""}` : "—";
+          const statusClass = "status-" + b.status;
+          const title = b.title.length > 50 ? b.title.slice(0, 50) + "…" : b.title;
+          return `<tr>
+            <td>${time}</td>
+            <td><a href="${b.url}" target="_blank" rel="noopener">${title}</a></td>
+            <td>${b.category}</td>
+            <td>${amt}</td>
+            <td class="${statusClass}">${b.status}${b.error_message ? "<br><small>" + b.error_message.slice(0,80) + "</small>" : ""}</td>
+          </tr>`;
+        }).join("");
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const targetCategories = [];
+      if (document.getElementById("cat_web_dev").checked) targetCategories.push("web_dev");
+      if (document.getElementById("cat_social_media").checked) targetCategories.push("social_media");
+      if (document.getElementById("cat_seo").checked) targetCategories.push("seo");
+      const payload = {
+        email: document.getElementById("email").value,
+        password: document.getElementById("password").value,
+        freelancer_name: document.getElementById("freelancer_name").value,
+        years_of_experience: parseInt(document.getElementById("years_of_experience").value, 10) || 3,
+        target_categories: targetCategories,
+        my_skills: document.getElementById("my_skills").value,
+        generic_template: document.getElementById("generic_template").value,
+        seo_template: document.getElementById("seo_template").value,
+        social_media_template: document.getElementById("social_media_template").value,
+        web_dev_template: document.getElementById("web_dev_template").value,
+        delivery_days: parseInt(document.getElementById("delivery_days").value, 10),
+        min_delay_seconds: parseInt(document.getElementById("min_delay_seconds").value, 10),
+        max_delay_seconds: parseInt(document.getElementById("max_delay_seconds").value, 10),
+        max_bids_per_hour: parseInt(document.getElementById("max_bids_per_hour").value, 10),
+        max_bids_per_day: parseInt(document.getElementById("max_bids_per_day").value, 10),
+        headless: document.getElementById("headless").checked,
+        dry_run: document.getElementById("dry_run").checked,
+        manual_login_wait_seconds: parseInt(document.getElementById("manual_login_wait_seconds").value, 10),
+        max_project_age_days: parseInt(document.getElementById("max_project_age_days").value, 10),
+        max_proposals: parseInt(document.getElementById("max_proposals").value, 10),
+        use_smart_proposals: document.getElementById("use_smart_proposals").checked,
+        proposal_style: document.getElementById("proposal_style").value,
+      };
+      try {
+        const res = await fetch("/api/bot/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) alert(data.detail || "Failed to start");
+        else refreshStatus();
+      } catch (err) {
+        alert("Error: " + err.message);
+      }
+    });
+
+    document.getElementById("btnStop").addEventListener("click", async () => {
+      await fetch("/api/bot/stop", { method: "POST" });
+      refreshStatus();
+    });
+
+    async function refreshSessions() {
+      try {
+        const res = await fetch("/api/sessions");
+        const sessions = await res.json();
+        const tbody = document.getElementById("sessionsTable");
+        if (!sessions.length) {
+          tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">No sessions yet</td></tr>';
+          return;
+        }
+        tbody.innerHTML = sessions.map(s => {
+          const start = s.start_at ? new Date(s.start_at).toLocaleString() : "—";
+          const end = s.end_at ? new Date(s.end_at).toLocaleString() : "—";
+          const statusClass = "status-" + (s.status === "running" ? "running" : s.status === "crashed" ? "failed" : "skipped");
+          return `<tr>
+            <td>#${s.id}</td>
+            <td>${start}</td>
+            <td>${end}</td>
+            <td class="${statusClass}">${s.status}</td>
+            <td>${s.successful_bids}/${s.total_bids}</td>
+            <td><button class="btn-export" style="padding:4px 10px;font-size:0.8rem;" onclick="showSessionErrors(${s.id})">View errors</button></td>
+          </tr>`;
+        }).join("");
+      } catch (e) { console.error(e); }
+    }
+
+    async function showSessionErrors(sessionId) {
+      try {
+        const res = await fetch(`/api/sessions/${sessionId}/errors`);
+        const errors = await res.json();
+        const container = document.getElementById("sessionErrors");
+        if (!errors.length) {
+          container.innerHTML = '<p style="color:var(--muted)">No errors for this session.</p>';
+        } else {
+          container.innerHTML = errors.map(e => `
+            <div style="background:var(--bg);border:1px solid var(--danger);border-radius:8px;padding:12px;margin-bottom:8px;">
+              <div style="display:flex;justify-content:space-between;font-size:0.8rem;">
+                <span style="color:var(--danger);font-weight:600;">${e.error_type}</span>
+                <span style="color:var(--muted)">${new Date(e.timestamp).toLocaleString()}</span>
+              </div>
+              <p style="margin:6px 0 0;font-size:0.9rem;">${e.error_message}</p>
+              ${e.context ? `<p style="margin:4px 0 0;font-size:0.8rem;color:var(--muted);">Context: ${e.context}</p>` : ""}
+              ${e.traceback ? `<details style="margin-top:6px;"><summary style="cursor:pointer;font-size:0.8rem;color:var(--accent);">Traceback</summary><pre style="font-size:0.75rem;overflow-x:auto;margin:6px 0 0;padding:8px;background:#0a0f14;border-radius:4px;">${e.traceback}</pre></details>` : ""}
+            </div>
+          `).join("");
+        }
+        document.getElementById("errorsModal").style.display = "flex";
+      } catch (e) { console.error(e); }
+    }
+
+    document.getElementById("closeErrorsModal").addEventListener("click", () => {
+      document.getElementById("errorsModal").style.display = "none";
+    });
+
+    setInterval(() => {
+      refreshStatus();
+      refreshBids();
+      refreshSessions();
+    }, 10000);
+    refreshStatus();
+    refreshBids();
+    refreshSessions();
+  </script>
+</body>
+</html>
