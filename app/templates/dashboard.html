@@ -294,7 +294,7 @@ Skills: {skill_tags}</textarea>
         <input type="number" id="manual_login_wait_seconds" value="180" min="30" max="600">
 
         <div class="checkbox-row">
-          <input type="checkbox" id="headless" name="headless">
+          <input type="checkbox" id="headless" name="headless" {% if headless_default %}checked{% endif %}>
           <label for="headless" style="margin:0">Headless browser (hide window)</label>
         </div>
         <p style="font-size:0.8rem; color:var(--muted); margin:8px 0 0;">

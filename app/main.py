@@ -22,6 +22,7 @@ from app.schemas import (
     SessionResponse,
 )
 from app.bot.worker import bot_worker
+from app.config import settings
 
 logging.basicConfig(
     level=logging.INFO,
@@ -48,6 +49,7 @@ async def dashboard(request: Request):
     return templates.TemplateResponse(
         request,
         "dashboard.html",
+        {"headless_default": settings.headless_default},
     )
 
 

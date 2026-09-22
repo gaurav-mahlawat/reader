@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, field_validator
 
 from app.bot.utils import parse_skills_list
+from app.config import settings
 
 VALID_CATEGORIES = ["web_dev", "social_media", "seo"]
 
@@ -83,7 +84,7 @@ class BotSettings(BaseModel):
     max_delay_seconds: int = Field(default=600, ge=60)
     max_bids_per_hour: int = Field(default=8, ge=1, le=50)
     max_bids_per_day: int = Field(default=40, ge=1, le=200)
-    headless: bool = False
+    headless: bool = Field(default_factory=lambda: settings.headless_default)
     dry_run: bool = False
     manual_login_wait_seconds: int = Field(
         default=180,

@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     host: str = "127.0.0.1"
     port: int = 8000
     data_dir: str = "data"
+    headless_default: bool = False
 
     @property
     def data_path(self) -> Path:
