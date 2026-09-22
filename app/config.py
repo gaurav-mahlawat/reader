@@ -12,6 +12,13 @@ class Settings(BaseSettings):
     port: int = 8000
     data_dir: str = "data"
     headless_default: bool = False
+    auth_username: str = ""
+    auth_password: str = ""
+    secret_key: str = ""
+
+    @property
+    def auth_enabled(self) -> bool:
+        return bool(self.auth_username and self.auth_password)
 
     @property
     def data_path(self) -> Path:

@@ -3,9 +3,10 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
+from app.auth import TOKEN_TTL_SECONDS, check_credentials, make_token, verify_token
 from app.database import (
     ensure_db,
     export_bids_csv,
@@ -42,6 +43,60 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Reader", lifespan=lifespan)
+
+PUBLIC_PATHS = {"/login", "/logout"}
+
+
+@app.middleware("http")
+async def auth_middleware(request: Request, call_next):
+    if not settings.auth_enabled:
+        return await call_next(request)
+    path = request.url.path
+    if path in PUBLIC_PATHS or path.startswith("/static"):
+        return await call_next(request)
+    token = request.cookies.get("reader_session")
+    if token and verify_token(token):
+        return await call_next(request)
+    if path.startswith("/api"):
+        return JSONResponse(status_code=401, content={"detail": "Authentication required"})
+    return RedirectResponse(url="/login", status_code=307)
+
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    return templates.TemplateResponse(request, "login.html")
+
+
+@app.post("/login")
+async def login_submit(request: Request):
+    form = await request.form()
+    username = str(form.get("username", ""))
+    password = str(form.get("password", ""))
+    if check_credentials(username, password):
+        token = make_token(username)
+        response = RedirectResponse(url="/", status_code=303)
+        response.set_cookie(
+            "reader_session",
+            token,
+            max_age=TOKEN_TTL_SECONDS,
+            httponly=True,
+            samesite="lax",
+            secure=request.url.scheme == "https",
+        )
+        return response
+    return templates.TemplateResponse(
+        request,
+        "login.html",
+        {"error": "Invalid username or password"},
+        status_code=401,
+    )
+
+
+@app.get("/logout")
+async def logout():
+    response = RedirectResponse(url="/login", status_code=303)
+    response.delete_cookie("reader_session")
+    return response
 
 
 @app.get("/", response_class=HTMLResponse)
